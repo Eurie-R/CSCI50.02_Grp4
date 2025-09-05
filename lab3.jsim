@@ -1,0 +1,51 @@
+.include "8clocks.jsim"
+.include "nominal.jsim"
+.include "stdcell.jsim"
+
+.subckt fa a b c out4 out5 out6 sum carry
+  Xsub1 a b out4 xor2
+  Xsub2 out4 c sum xor2
+  Xsub3 out4 c out5 nand2
+  Xsub4 a b out6 nand2
+  Xsub5 out5 out6 carry nand2
+.ends
+
+
+.subckt add32 a[31:0] b[31:0] c_in0 sum[31:0] c_out[31:30]
+Xfa0 a[0] b[0] c_in0 o0_4 o0_5 o0_6 sum[0] c1 fa 
+xfa1 a[1] b[1] c1 o1_4 o1_5 o1_6  sum[1] c2 fa
+xfa2 a[2] b[2] c2 o2_4 o2_5 o2_6  sum[2] c3 fa
+xfa3 a[3] b[3] c3 o3_4 o3_5 o3_6  sum[3] c4 fa
+xfa4 a[4] b[4] c4 o4_4 o4_5 o4_6  sum[4] c5 fa
+xfa5 a[5] b[5] c5 o5_4 o5_5 o5_6  sum[5] c6 fa
+xfa6 a[6] b[6] c6 o6_4 o6_5 o6_6  sum[6] c7 fa
+xfa7 a[7] b[7] c7 o7_4 o7_5 o7_6  sum[7] c8 fa
+xfa8 a[8] b[8] c8 o8_4 o8_5 o8_6  sum[8] c9 fa
+xfa9 a[9] b[9] c9 o9_4 o9_5 o9_6  sum[9] c10 fa
+xfa10 a[10] b[10] c10 o10_4 o10_5 o10_6  sum[10] c11 fa
+xfa11 a[11] b[11] c11 o11_4 o11_5 o11_6  sum[11] c12 fa
+xfa12 a[12] b[12] c12 o12_4 o12_5 o12_6  sum[12] c13 fa
+xfa13 a[13] b[13] c13 o13_4 o13_5 o13_6  sum[13] c14 fa
+xfa14 a[14] b[14] c14 o14_4 o14_5 o14_6  sum[14] c15 fa
+xfa15 a[15] b[15] c15 o15_4 o15_5 o15_6  sum[15] c16 fa
+xfa16 a[16] b[16] c16 o16_4 o16_5 o16_6  sum[16] c17 fa
+xfa17 a[17] b[17] c17 o17_4 o17_5 o17_6  sum[17] c18 fa
+xfa18 a[18] b[18] c18 o18_4 o18_5 o18_6  sum[18] c19 fa
+xfa19 a[19] b[19] c19 o19_4 o19_5 o19_6  sum[19] c20 fa
+xfa20 a[20] b[20] c20 o20_4 o20_5 o20_6  sum[20] c21 fa
+xfa21 a[21] b[21] c21 o21_4 o21_5 o21_6  sum[21] c22 fa
+xfa22 a[22] b[22] c22 o22_4 o22_5 o22_6  sum[22] c23 fa
+xfa23 a[23] b[23] c23 o23_4 o23_5 o23_6  sum[23] c24 fa
+xfa24 a[24] b[24] c24 o24_4 o24_5 o24_6  sum[24] c25 fa
+xfa25 a[25] b[25] c25 o25_4 o25_5 o25_6  sum[25] c26 fa
+xfa26 a[26] b[26] c26 o26_4 o26_5 o26_6  sum[26] c27 fa
+xfa27 a[27] b[27] c27 o27_4 o27_5 o27_6  sum[27] c28 fa
+xfa28 a[28] b[28] c28 o28_4 o28_5 o28_6  sum[28] c29 fa
+xfa29 a[29] b[29] c29 o29_4 o29_5 o29_6  sum[29] c30 fa
+xfa30 a[30] b[30] c30 o30_4 o30_5 o30_6  sum[30] c_out[30] fa
+xfa31 a[31] b[31] c31 o31_4 o31_5 o31_6  sum[31] c_out[31] fa
+.ends
+
+*Instantiation
+Xsum a[31:0] b[31:0] 0 sum[31:0] c31 c30 add32
+

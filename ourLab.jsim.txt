@@ -1,0 +1,68 @@
+*************************************************
+* Dimatulac, Adara Rei
+* Pacardo, Gabriel Nathan
+* Ramoy, Lorenzo Uriel
+*************************************************
+
+.include "8clocks.jsim"
+.include "nominal.jsim"
+.include "stdcell.jsim"
+
+*************************************************
+* FX = ABC + DE + FG
+*
+* Converted to NAND and NOT:
+* FX = (((((ABC)')')')((((DE)')')')((((FG)')')'))'
+*
+* Simplify:
+* FX = ((ABC)'(DE)'(FG)')'
+*
+* OUT1 = (ABC)'
+* OUT2 = (DE)'
+* OUT3 = (FG)'
+* FX_OUT = ((OUT1)(OUT2)(OUT3))'
+*************************************************
+
+.subckt fx a b c d e f g out1 out2 out3 fx_out 
+  Xsub1 a b c out1 nand3
+  Xsub2 d e out2 nand2
+  Xsub3 f g out3 nand2
+  Xsub4 out1 out2 out3 fx_out nand3
+.ends
+
+************************************************
+* SUM = (A XOR B) XOR C
+* CARRY = ((A XOR B) AND C) OR (A AND B) 
+*
+* Converted to NAND, NOT, AND XOR:
+* SUM = (A XOR B) XOR C
+* CARRY = (NOT (NOT ((A XOR B) NAND C))) NAND (NOT(NOT(A NAND B))) 
+*************************************************
+
+.subckt fa a b c out4 out5 out6 sum carry
+  Xsub1 a b out4 xor2
+  Xsub2 out4 c sum xor2
+  Xsub3 out4 c out5 nand2
+  Xsub4 a b out6 nand2
+  Xsub5 out5 out6 carry nand2
+.ends
+
+Xfx clk1 clk2 clk3 clk4 clk5 clk6 clk7 out1 out2 out3 fx_out fx
+Xfa clk5 clk6 clk7 out4 out5 out6 sum carry fa
+
+*************************************************
+* In order to see one full cycle of clk7, we need at least 640 ns according to 8clocks.jsim
+*************************************************
+
+
+.tran 640ns
+.plot clk1
+.plot clk2
+.plot clk3
+.plot clk4
+.plot clk5
+.plot clk6
+.plot clk7
+.plot fx_out
+.plot sum
+.plot carry
