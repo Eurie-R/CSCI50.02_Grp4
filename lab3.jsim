@@ -12,6 +12,11 @@
 
 
 .subckt add32 a[31:0] b[31:0] c_in0 sum[31:0] c_out[31:30]
+
+
+Xfa[31:0] a[31:0] b[31:0] c[31:0] o[31:0]_4 o[31:0]_5 o[31:0]_6 sum[31:0] c[32:1] fa
+
+
 Xfa0 a[0] b[0] c_in0 o0_4 o0_5 o0_6 sum[0] c1 fa 
 xfa1 a[1] b[1] c1 o1_4 o1_5 o1_6  sum[1] c2 fa
 xfa2 a[2] b[2] c2 o2_4 o2_5 o2_6  sum[2] c3 fa
