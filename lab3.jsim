@@ -2,22 +2,41 @@
 .include "nominal.jsim"
 .include "stdcell.jsim"
 
-.subckt fa a b c out4 out5 out6 sum carry
-  Xsub1 a b out4 xor2
-  Xsub2 out4 c sum xor2
-  Xsub3 out4 c out5 nand2
-  Xsub4 a b out6 nand2
-  Xsub5 out5 out6 carry nand2
+.subckt fa a b c sum carry
+  Xsub1 a b out1 xor2
+  Xsub2 out1 c sum xor2
+  Xsub3 out1 c out2 nand2
+  Xsub4 a b out3 nand2
+  Xsub5 out2 out3 carry nand2
 .ends
 
-
 .subckt add32 a[31:0] b[31:0] c_in0 sum[31:0] c_out[31:30]
-Xfa[31:0] a[31:0] b[31:0] c[31:0] o[31:0]_4 o[31:0]_5 o[31:0]_6 sum[31:0] c[32:1] fa
-.connect c_in0 c0
-.connect c31 c_out[30]
-.connect c32 c_out[31]
+  .connect c_in0 c0
+  .connect c31 c_out[30]
+  .connect c32 c_out[31] 
+  Xfa a[31:0] b[31:0] c[31:0] sum[31:0] c[32:1] fa
 .ends
 
 *Instantiation
 Xsum a[31:0] b[31:0] 0 sum[31:0] c31 c30 add32
+
+Wa a[31:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 0x00000000 0x55555555 0x00000000 0x55555555 0xFFFFFFFF 0xAAAAAAAA 0x00000000 0xAAAAAAAA 0x00000001 0xFFFFFFFF
+
+Wb b[31:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 0x00000000 0x00000000 0x55555555 0x55555555 0xFFFFFFFF 0x00000000 0xAAAAAAAA 0xAAAAAAAA 0xFFFFFFFF 0x00000001
+
+.tran 200ns
+.plot a[31:0]
+.plot b[31:0]
+.plot sum[31:0]
+
+***************************************************************************************
+*
+* The last two cases have a long transition delay to the computation being done.
+* It is because of the repeated carries being done to get the sum of the output.
+*
+***************************************************************************************
+
+
 
