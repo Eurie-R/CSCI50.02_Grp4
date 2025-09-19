@@ -113,20 +113,3 @@ Wincr incr[31:0] nrz(0, 5, 50ns, 0ns, 0.001ns, 0.001ns)
 .plot sd(incr[31:0])
 .plot clk1
 .plot sd(reg[31:0])
-
-*******************************************************************************
-* a. Explain the behavior of the 32-bit register output lines, reg[31:0], as it is
-* incrementing, decrementing, and resetting.
-*
-* It only updates whenever the clk is in the rising edge.When reset = 1 
-* it retains its value in the register and only changes when the clk is in 
-* a positive edge trigger  
-*
-* b. What is stopping you from using a super-fast clock to make a super-fast
-*
-* It is mainly due to the physical limitations and propagation delays. The 32 bit carry as 
-* well as the flip-flops need time to compute and settle to stable values. If the 
-* clock is too fast, it would cause incorrect counting or unstable values. 
-
-*******************************************************************************
-
