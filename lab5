@@ -1,0 +1,118 @@
+*******************************************************************************
+* As with the previous labs, replace this header comment with your names!
+* - Follow "Last Name, First Name" format.
+* - Sort alphabetically!
+*******************************************************************************
+
+.include "8clocks.jsim"
+.include "nominal.jsim"
+.include "stdcell.jsim"
+
+*******************************************************************************
+* Plug-in your full adder and 32-bit ripple-carry adder, and counter 32 subcircuits here.
+*******************************************************************************
+.subckt fa a b c_in sum c_out
+  Xsub1 a b out1 xor2
+  Xsub2 out1 c_in sum xor2
+  Xsub3 out1 c_in out2 nand2
+  Xsub4 a b out3 nand2
+  Xsub5 out2 out3 c_out nand2
+.ends
+
+.subckt add32 a[31:0] b[31:0] c_in0 sum[31:0] c_out[31:30]
+  .connect c_in0 c0
+  .connect c31 c_out[30]
+  .connect c32 c_out[31] 
+  Xfa a[31:0] b[31:0] c[31:0] sum[31:0] c[32:1] fa
+.ends
+
+.subckt counter32 reset a[31:0] f[31:0] clk
+  .connect 0 d1[31:0]
+  Xadd32 a[31:0] f[31:0] 0 sum[31:0] c31 c30 add32
+  Xmux2 reset#32 sum[31:0] d1[31:0] output[31:0] mux2 
+  Xdreg output[31:0] clk#32 f[31:0] dreg
+.ends
+
+*******************************************************************************
+* Subtractor 
+*******************************************************************************
+
+.subckt as32 a[31:0] b[31:0] op0 fas[31:0] n v  
+
+*Negative Status
+*Check the MSB to check if its negative
+  .connect fas[31] n
+
+* Invert bits of b to attain ~b
+   Xinvb b[31:0] b_not[31:0] inverter
+
+* Mux checks if we will send the b or ~b into the adder 
+   Xmux2 op0#32 b[31:0] b_not[31:0] output[31:0] mux2 
+
+* adds A and the output from mux (b or ~b) 
+* tie op0 and the c_in0 in order to add the 1 when doing two's complement.
+* This is essentially "tricking" the add 32 to add 1
+   Xadd32 a[31:0] output[31:0] op0 fas[31:0] c31 c30 add32
+
+*Overflow Status 
+*check if overflow by comparing c30 and c31 in a xor gate 
+   Xoverflow c30 c31 v xor2
+
+.ends
+
+
+*******************************************************************************
+* Finally, it's time to simulate.
+* This circuit block instantiates the counter32 circuit that you just wrote.
+* We pass it a single-bit reset signal, a 32-bit increment value, a 32-bit
+* register, and a clock signal (we just used the JSim-predefined clk1).
+*******************************************************************************
+Xcounter32 reset incr[31:0] reg[31:0] clk1 counter32
+Xas32 a[31:0] b[31:0] op0 sum[31:0] n v as32
+
+
+*******************************************************************************
+* This "reset" waveform sets up a reset signal that has a delayed start of 15ns
+* and then goes to the next value every 50ns.
+* The values "1 0 0 0 1 0" indicate that the reset signal only turns on twice
+* (at times 15ns and 215ns) for a period of 50ns intervals each, and the signal
+* is turned off otherwise.
+*******************************************************************************
+Wreset reset nrz(0, 5, 50ns, 15ns, 0.001ns, 0.001ns)
++ 1 0 0 0 1 0
+
+
+Wincr incr[31:0] nrz(0, 5, 50ns, 0ns, 0.001ns, 0.001ns)
++ 0 1 3 -1
+
+* A input
+Wa a[31:0] nrz(0, 4, 50ns, 0ns, 0.001ns, 0.001ns)
++ 0x55555555 0 0x55555555 -1 0 0xAAAAAAAA -1 10 5
+
+* B input
+Wb b[31:0] nrz(0, 4, 50ns, 0ns, 0.001ns, 0.001ns)
++ 0 0x55555555 0x55555555 -1 -1 0 -1 5 10
+
+* 0 = add, 1 = subtract
+Wop op0 nrz(0, 4, 50ns, 0ns, 0.001ns, 0.001ns)
++ 0 0 0 0 1 0 1 1 1 
+
+
+*******************************************************************************
+* Plot our reset waveform, our incr waveform, clk1, and your 32-bit register.
+* Note: sd() displays a range of nodes as a signed decimal (instead of hex)
+*******************************************************************************
+.tran 500ns
+.plot reset
+.plot sd(incr[31:0])
+.plot clk1
+.plot sd(reg[31:0])
+
+.plot sd(a[31:0])
+.plot sd(b[31:0])
+.plot op0
+.plot sd(sum[31:0])
+.plot n
+.plot v
+
+
