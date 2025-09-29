@@ -9,7 +9,7 @@
 .include "stdcell.jsim"
 
 *******************************************************************************
-* Plug-in your full adder and 32-bit ripple-carry adder subcircuits here.
+* Plug-in your full adder and 32-bit ripple-carry adder, and counter 32 subcircuits here.
 *******************************************************************************
 .subckt fa a b c_in sum c_out
   Xsub1 a b out1 xor2
@@ -26,9 +26,6 @@
   Xfa a[31:0] b[31:0] c[31:0] sum[31:0] c[32:1] fa
 .ends
 
-*******************************************************************************
-* Your new counter32 subcircuit code should go here.
-*******************************************************************************
 .subckt counter32 reset a[31:0] f[31:0] clk
   .connect 0 d1[31:0]
   Xadd32 a[31:0] f[31:0] 0 sum[31:0] c31 c30 add32
@@ -40,7 +37,7 @@
 * Subtractor 
 *******************************************************************************
 
-.subckt as32 a[31:0] b[31:0] op0 fas[31:0] n v  
+.subckt as32 a[31:0] b[31:0] op0 fas[31:0] n v z
 
 *Negative Status
 *Check the MSB to check if its negative
@@ -61,6 +58,17 @@
 *check if overflow by comparing c30 and c31 in a xor gate 
    Xoverflow c30 c31 v xor2
 
+* Check if zero value
+*You make 8 groups of 4 bit nors using iterators 
+Xcheckzero fas[31:24] fas[23:16] fas[15:8] fas[7:0] z[7:0] or4
+
+*make 2 nors using the 8 bits 
+Xzerostatus z7 z6 z5 z4 temp1 or4
+Xzerostatus2 z3 z2 z1 z0 temp2 or4
+
+*compare the last 2 nors to get the z status
+Xzerofinalstatus temp1 temp2 z nor2
+
 .ends
 
 
@@ -71,8 +79,7 @@
 * register, and a clock signal (we just used the JSim-predefined clk1).
 *******************************************************************************
 Xcounter32 reset incr[31:0] reg[31:0] clk1 counter32
-Xas32 a[31:0] b[31:0] op0 sum[31:0] n v as32
-
+Xas32 a[31:0] b[31:0] op0 sum[31:0] n v z as32
 
 *******************************************************************************
 * This "reset" waveform sets up a reset signal that has a delayed start of 15ns
@@ -90,22 +97,22 @@ Wincr incr[31:0] nrz(0, 5, 50ns, 0ns, 0.001ns, 0.001ns)
 
 * A input
 Wa a[31:0] nrz(0, 4, 50ns, 0ns, 0.001ns, 0.001ns)
-+ 0x55555555 0 0x55555555 -1 0 0xAAAAAAAA -1 10 5
++ 0x55555555 0 0x55555555 -1 0 0xAAAAAAAA -1 10 5 0 0
 
 * B input
 Wb b[31:0] nrz(0, 4, 50ns, 0ns, 0.001ns, 0.001ns)
-+ 0 0x55555555 0x55555555 -1 -1 0 -1 5 10
++ 0 0x55555555 0x55555555 -1 -1 0 -1 5 10 5 0 0
 
 * 0 = add, 1 = subtract
 Wop op0 nrz(0, 4, 50ns, 0ns, 0.001ns, 0.001ns)
-+ 0 0 0 0 1 0 1 1 1 
++ 0 0 0 0 1 0 1 1 1 1 0 1
 
 
 *******************************************************************************
 * Plot our reset waveform, our incr waveform, clk1, and your 32-bit register.
 * Note: sd() displays a range of nodes as a signed decimal (instead of hex)
 *******************************************************************************
-.tran 500ns
+.tran 1000ns
 .plot reset
 .plot sd(incr[31:0])
 .plot clk1
@@ -117,5 +124,6 @@ Wop op0 nrz(0, 4, 50ns, 0ns, 0.001ns, 0.001ns)
 .plot sd(sum[31:0])
 .plot n
 .plot v
+.plot z
 
 
