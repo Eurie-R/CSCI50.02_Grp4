@@ -1,0 +1,167 @@
+*******************************************************************************
+* As with the previous labs, replace this header comment with your names!
+* - Follow "Last Name, First Name" format.
+* - Sort alphabetically!
+*******************************************************************************
+
+.include "8clocks.jsim"
+.include "nominal.jsim"
+.include "stdcell.jsim"
+
+*******************************************************************************
+* Full adder and 32-bit ripple-carry full adder
+*******************************************************************************
+.subckt fa a b c_in sum c_out
+  Xsub1 a b out1 xor2
+  Xsub2 out1 c_in sum xor2
+  Xsub3 out1 c_in out2 nand2
+  Xsub4 a b out3 nand2
+  Xsub5 out2 out3 c_out nand2
+.ends
+
+.subckt add32 a[31:0] b[31:0] c_in0 sum[31:0] c_out[31:30]
+  .connect c_in0 c0
+  .connect c31 c_out[30]
+  .connect c32 c_out[31] 
+  Xfa a[31:0] b[31:0] c[31:0] sum[31:0] c[32:1] fa
+.ends
+
+*******************************************************************************
+* Subtractor 
+*******************************************************************************
+
+.subckt as32 a[31:0] b[31:0] op0 fas[31:0] n v z
+
+*Negative Status
+*Check the MSB to check if its negative
+  .connect fas[31] n
+
+* Invert bits of b to attain ~b
+   Xinvb b[31:0] b_not[31:0] inverter
+
+* Mux checks if we will send the b or ~b into the adder 
+   Xmux2 op0#32 b[31:0] b_not[31:0] output[31:0] mux2 
+
+* adds A and the output from mux (b or ~b) 
+* tie op0 and the c_in0 in order to add the 1 when doing two's complement.
+* This is essentially "tricking" the add 32 to add 1
+   Xadd32 a[31:0] output[31:0] op0 fas[31:0] c31 c30 add32
+
+*Overflow Status 
+*check if overflow by comparing c30 and c31 in a xor gate 
+   Xoverflow c30 c31 v xor2
+
+* Check if zero value
+  Xcheckzero0 fas[31:24] fas[23:16] fas[15:8] fas[7:0] temp0_[7:0] or4
+  Xcheckzero1 temp0_[7:6] temp0_[5:4] temp0_[3:2] temp0_[1:0] temp1_[1:0] or4
+  Xcheckzero2 temp1_1 temp1_0 temp2 or2
+  Xzerofinalstatus temp2 z inverter
+
+.ends
+
+*******************************************************************************
+*Comparator
+*******************************************************************************
+.subckt cmp32 n v z op[2:1] fcmp[31:0]
+  .connect 0 fcmp[31:1]
+
+  *Checks if equal
+  Xequal op1 z is_equal and2
+
+  *Checks if less than
+  Xless0 n v temp0 xor2
+  Xless1 op2 temp0 is_less and2
+  
+  *Checks if less than OR equal
+  Xlq is_equal is_less is_lq or2
+
+  *Gets output
+  Xout op1 op2 0 is_equal is_less is_lq fcmp[0] mux4
+.ends
+
+
+
+*******************************************************************************
+* Finally, it's time to simulate.
+* This circuit block instantiates the counter32 circuit that you just wrote.
+* We pass it a single-bit reset signal, a 32-bit increment value, a 32-bit
+* register, and a clock signal (we just used the JSim-predefined clk1).
+*******************************************************************************
+Xas32 a[31:0] b[31:0] op0 sum[31:0] n v z as32
+Xcmp32 n v z op[2:1] fcmp[31:0] cmp32
+
+Wa a[31:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 0 0x55555555 0 0x55555555 -1 0 0 0xAAAAAAAA 0 0xAAAAAAAA 1 -1 0x80000000 -1
+
+Wb b[31:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 0 0 0x55555555 0x55555555 -1 0 -1 0 0xAAAAAAAA 0xAAAAAAAA -1 1 0x80000000 -1
+
+Wop0 op0 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 0 0 0 0 0 1 1 0 0 0 0 0 0 1
+
+Wop1 op1 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+
+Wop2 op2 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+
+.tran 1000ns
+
+.plot a[31:0]
+.plot b[31:0]
+.plot op0
+.plot sum[31:0]
+.plot n
+.plot v
+.plot z
+.plot fcmp[31:0]
+
+******************************************************************************
+* Comparator Test Cases
+******************************************************************************
+Xtestcase x[31:0] y[31:0] temp0 out[31:0] neg oflow zr as32
+
+Wx x[31:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 2 0x80000000 3 0x7FFFFFFF 3
+
+Wy y[31:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ -3 2 5 -2 3
+
+Wtemp0 temp0 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 1 1 1 1 1
+
+.plot x[31:0]
+.plot y[31:0]
+
+* X = Y
+Xeqtest neg oflow zr iseq[2:1] eq0_[31:0] cmp32
+
+Wiseq1 iseq1 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 1 1 1 1 1
+
+Wiseq2 iseq2 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 0 0 0 0 0
+
+.plot eq0_[31:0]
+
+* X < Y
+Xlttest neg oflow zr islt[2:1] lt0_[31:0] cmp32
+
+Wislt1 islt1 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 0 0 0 0 0
+
+Wislt2 islt2 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 1 1 1 1 1
+
+.plot lt0_[31:0]
+
+* X <= Y
+Xlqtest neg oflow zr islq[2:1] lq0_[31:0] cmp32
+
+Wislq1 islq1 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 0 0 0 0 0
+
+Wislq2 islq2 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 1 1 1 1 1
+
+.plot lq0_[31:0]
