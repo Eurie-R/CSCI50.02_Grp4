@@ -121,4 +121,52 @@ Wop2 op2 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
 .plot z
 .plot fcmp[31:0]
 
+******************************************************************************
+* Comparator Test Cases
+******************************************************************************
+Xtestcase x[31:0] y[31:0] temp0 out[31:0] neg oflow zr as32
 
+Wx x[31:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 2 0x80000000 3 0x7FFFFFFF 3
+
+Wy y[31:0] nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ -3 2 5 -2 3
+
+Wtemp0 temp0 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 1 1 1 1 1
+
+.plot x[31:0]
+.plot y[31:0]
+
+* X = Y
+Xeqtest neg oflow zr iseq[2:1] eq0_[31:0] cmp32
+
+Wiseq1 iseq1 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 1 1 1 1 1
+
+Wiseq2 iseq2 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 0 0 0 0 0
+
+.plot eq0_[31:0]
+
+* X < Y
+Xlttest neg oflow zr islt[2:1] lt0_[31:0] cmp32
+
+Wislt1 islt1 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 0 0 0 0 0
+
+Wislt2 islt2 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 1 1 1 1 1
+
+.plot lt0_[31:0]
+
+* X <= Y
+Xlqtest neg oflow zr islq[2:1] lq0_[31:0] cmp32
+
+Wislq1 islq1 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 0 0 0 0 0
+
+Wislq2 islq2 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 1 1 1 1 1
+
+.plot lq0_[31:0]
