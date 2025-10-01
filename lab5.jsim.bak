@@ -165,16 +165,3 @@ Wislq2 islq2 nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
 + 1 1 1 1 1
 
 .plot lq0_[31:0]
-
-**************************************************************************************************************************************************************
-*Critical Path
-*Lets say you have a input b[0] and you would be subtracting it
-*It first goes into the inverter which inverts its bit 
-*Then it will go to a MUX which selects either b[0] or its inverse b_not[0]
-*then the bit that is chosen will go through the 32 bit adder which goes on for 31 more times 
-*It will then produce the final bit fas[31]. This bit then goes through 3 nor gates 
-*To produce the zero signal. It then goes through an and gate in the comparator to 
-*check is_equal. An OR gate if its less than or equal, and lastly a mux4 gate to 
-*produce the fcmp[0]
-*input: b[0] -> Xinvb -> Xmux2 -> Xadd32 (31 times since it uses the carry for other adders) -> nor4 -> nor4 -> nor2 -> and2 -> or2 -> mux4 -> output:fcmp[0]
-**************************************************************************************************************************************************************
