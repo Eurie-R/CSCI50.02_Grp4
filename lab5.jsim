@@ -52,15 +52,10 @@
    Xoverflow c30 c31 v xor2
 
 * Check if zero value
-*You make 8 groups of 4 bit ors using iterators 
-Xcheckzero fas[31:24] fas[23:16] fas[15:8] fas[7:0] z[7:0] nor4
-
-*make 2 ors using the 8 bits 
-Xzerostatus z7 z6 z5 z4 temp1 nor4
-Xzerostatus2 z3 z2 z1 z0 temp2 nor4
-
-*compare the last 2 nors to get the z status
-Xzerofinalstatus temp1 temp2 z nor2
+  Xcheckzero0 fas[31:24] fas[23:16] fas[15:8] fas[7:0] temp0_[7:0] or4
+  Xcheckzero1 temp0_[7:6] temp0_[5:4] temp0_[3:2] temp0_[1:0] temp1_[1:0] or4
+  Xcheckzero2 temp1_1 temp1_0 temp2 or2
+  Xzerofinalstatus temp2 z inverter
 
 .ends
 
