@@ -1,0 +1,164 @@
+***************************************************************************************
+*
+* Dimatulac, Adara Rei
+* Pacardo, Gabriel Nathan
+* Ramoy, Lorenzo Uriel
+*
+***************************************************************************************
+
+.include "8clocks.jsim"
+.include "nominal.jsim"
+.include "stdcell.jsim"
+
+*******************************************************************************
+* Full adder and 32-bit ripple-carry full adder
+*******************************************************************************
+.subckt fa a b c_in sum c_out
+  Xsub1 a b out1 xor2
+  Xsub2 out1 c_in sum xor2
+  Xsub3 out1 c_in out2 nand2
+  Xsub4 a b out3 nand2
+  Xsub5 out2 out3 c_out nand2
+.ends
+
+.subckt add32 a[31:0] b[31:0] c_in0 sum[31:0] c_out[31:30]
+  .connect c_in0 c0
+  .connect c31 c_out[30]
+  .connect c32 c_out[31] 
+  Xfa a[31:0] b[31:0] c[31:0] sum[31:0] c[32:1] fa
+.ends
+
+*******************************************************************************
+* Subtractor 
+*******************************************************************************
+
+.subckt as32 a[31:0] b[31:0] op0 fas[31:0] n v z
+
+*Negative Status
+*Check the MSB to check if its negative
+  .connect fas[31] n
+
+* Invert bits of b to attain ~b
+   Xinvb b[31:0] b_not[31:0] inverter
+
+* Mux checks if we will send the b or ~b into the adder 
+   Xmux2 op0#32 b[31:0] b_not[31:0] output[31:0] mux2 
+
+* adds A and the output from mux (b or ~b) 
+* tie op0 and the c_in0 in order to add the 1 when doing two's complement.
+* This is essentially "tricking" the add 32 to add 1
+   Xadd32 a[31:0] output[31:0] op0 fas[31:0] c31 c30 add32
+
+*Overflow Status 
+*check if overflow by comparing c30 and c31 in a xor gate 
+   Xoverflow c30 c31 v xor2
+
+* Check if zero value
+  Xcheckzero0 fas[31:24] fas[23:16] fas[15:8] fas[7:0] temp0_[7:0] or4
+  Xcheckzero1 temp0_[7:6] temp0_[5:4] temp0_[3:2] temp0_[1:0] temp1_[1:0] or4
+  Xcheckzero2 temp1_1 temp1_0 temp2 or2
+  Xzerofinalstatus temp2 z inverter
+
+.ends
+
+*******************************************************************************
+*Comparator
+*******************************************************************************
+.subckt cmp32 n v z op[2:1] fcmp[31:0]
+  .connect 0 fcmp[31:1]
+
+  *Checks if equal
+  Xequal op1 z is_equal and2
+
+  *Checks if less than
+  Xless0 n v temp0 xor2
+  Xless1 op2 temp0 is_less and2
+  
+  *Checks if less than OR equal
+  Xlq is_equal is_less is_lq or2
+
+  *Gets output
+  Xout op1 op2 0 is_equal is_less is_lq fcmp[0] mux4
+.ends
+
+
+*******************************************************************************
+* Bitwise Boolean
+*******************************************************************************
+.subckt bool32 a[31:0] b[31:0] op[3:0] fbool[31:0]
+  Xbool a[31:0] b[31:0] op[3:0]#32 fbool[31:0] mux4
+.ends
+
+
+*******************************************************************************
+* 32-bit Shifter
+*******************************************************************************
+.subckt shift32 a[31:0] b[4:0] op[1:0] fshift[31:0]
+  * 00 = logical left, 01 = logical right, 10 = nothing, 11 = arithmetic right
+  * assume shift right
+  
+  * op1: 0 = logical, 1 = arithmetic
+  * if op1 == 0, a31 automatically = 0; if op1 == 1, a31 = a31
+  Xsign op1 a31 sign and2
+  
+  * op0: 0 = left, 1 = right
+  * if op0 == 0, flip; if op0 == 1, do nothing;
+  Xflip op0#32 a[0:31] a[31:0] flipped[31:0] mux2
+  
+  * begin shifting
+  * b4 b3 b2 b1 b0 => 16 8 4 2 1
+  * if b == 0, no shift; if b == 1, shift; then cascade
+  Xsixteen b4#32 flipped[31:0] sign#16 flipped[31:16] sixteen[31:0] mux2
+  Xeight b3#32 sixteen[31:0] sign#8 flipped[31:8] eight[31:0] mux2
+  Xfour b2#32 eight[31:0] sign#4 flipped[31:4] four[31:0] mux2
+  Xtwo b1#32 four[31:0] sign#2 flipped[31:2] two[31:0] mux2
+  Xone b0#32 two[31:0] sign flipped[31:1] one[31:0] mux2
+  
+  * flip back
+  * if op0 == 0, flip; if op0 == 1, do nothing;
+  Xout op0#32 one[0:31] one[31:0] fshift[31:0] mux2 
+.ends
+
+
+******************************************************************************
+* ALU 
+******************************************************************************
+ .subckt alu32 a[31:0] b[31:0] alufn[5:0] f[31:0]
+ 
+  * alufn[3:0] for op
+  Xas a[31:0] b[31:0] alufn0 fas[31:0] n v z as32
+  Xshift a[31:0] b[4:0] alufn[1:0] fshift[31:0] shift32
+  Xbool a[31:0] b[31:0] alufn[3:0] fbool[31:0] bool32
+  Xcmp n v z alufn[2:1] fcmp[31:0] cmp32
+  
+  * alufn[5:4]
+  * 00 = as32, 01 = bool32, 10 = shift32, 11 = cmp32
+  Xmux alufn5#32 alufn4#32 fas[31:0] fshift[31:0] fbool[31:0] fcmp[31:0] f[31:0] mux4
+  
+ .ends
+
+
+******************************************************************************
+* alu32 Test Cases
+******************************************************************************
+
+Wa a[31:0] nrz(0v,5.0v,20ns,0ns,.1ns,.1ns)
++ -1 0x55555555 0xAAAAAAAA 1 -2 -1 -1 0x55555555 0 -1 0x55555555 0
++ -1 0x55555555 0 -1 0x55555555 0 -1 0x55555555 0 1 -1 -1 0x55555555 0xAAAAAAAA -1
++ 0x55555555 0xAAAAAAAA -1 -1 15 0 -1 15 0 -1 15 0
+
+Wb b[31:0] nrz(0v,5.0v,20ns,0ns,.1ns,.1ns)
++ 1 0x55555555 0xAAAAAAAA 1 0 -1 -1 0xAAAAAAAA 0 -1 0xAAAAAAAA 0
++ -1 0xAAAAAAAA 0 -1 0xAAAAAAAA 0 -1 0xAAAAAAAA 0 31 15 0 24 24 31
++ 24 24 31 1 15 -256 1 15 -256 1 15 -256
+
+Wf alufn[5:0] nrz(0v,5.0v,60ns,0ns,.1ns,.1ns)
++ 0 1 24 30 22 26 21 32 33 35 51 53 55
+
+Xalu a[31:0] b[31:0] alufn[5:0] f[31:0] alu32
+
+.tran 450ns
+.plot a[31:0]
+.plot b[31:0]
+.plot alufn[5:0]
+.plot f[31:0]
