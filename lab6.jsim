@@ -162,3 +162,6 @@ Xalu a[31:0] b[31:0] alufn[5:0] f[31:0] alu32
 .plot b[31:0]
 .plot alufn[5:0]
 .plot f[31:0]
+
+* How was the alu32 optimized for circuit size?
+* We tried to keep it "modular" and kept each of them as simple as possible with all the possible subcircuits for each operation. Then, just did a simple mux to obtain the final answer depending on the respective used operation. Also to lessen the circuitry for bit shifting, instead of separately implementing a right and left shift, we assume right shift as default and induced a "fake" left shift by flipping the bits
