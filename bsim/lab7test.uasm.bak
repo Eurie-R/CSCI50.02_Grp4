@@ -1,0 +1,45 @@
+.include beta.uasm
+
+    . = 0
+
+    | -------------------------
+    | Program entry
+    | -------------------------
+    LD(INPUT, R0)       | R0 = input N
+    CMOVE(0, R1)        | R1 = first term
+    CMOVE(1, R2)        | R2 = second term
+    CMOVE(0, R3)        | R3 = i or the loop counter
+
+    | set OUTPUT base address (must be a 16-bit-friendly value)
+    OUTPUT_ADDR = 0x0200
+    CMOVE(OUTPUT_ADDR, R4)  | R4 = address of the output
+
+loop_check:
+    CMPLT(R3, R0, R6)   | checks if i <= 0 
+    BEQ(R6, end)        | if i = 0 you end the program or branch to end
+
+    | store the term
+    ST(R1, 0, R4)       | Storing first term into the r4 
+    ADDC(R4, 4, R4)     | R4 += 4 go to the next memory address 
+    ADDC(R3, 1, R3)     | increment i or i++
+
+    | compute next = F_prev + F_curr and shift:
+    ADD(R1, R2, R5)     | R5 = R1 + R2 : R5 being the temporary storage 
+    MOVE(R2, R1)        | Shift contents of the 2nd term to the first term like sliding window
+    MOVE(R5, R2)        | move the next term into r2 
+
+    BR(loop_check)      | repeat
+
+end:
+    HALT()
+
+    | -------------------------
+    | Data area
+    | -------------------------
+    .align 4
+    . = OUTPUT_ADDR
+OUTPUT: . = .           | ensure label at OUTPUT_ADDR
+        . = . + 4*64    | reserve room for up to 64 terms (adjust as needed)
+
+    . = 0x1000
+INPUT:  LONG(10)        | example: N = 10 (change before run)
