@@ -1,0 +1,85 @@
+.include beta.uasm
+
+| |||||||||||||||||||||||||||||||
+| Dimatulac, Adara Rei
+| Pacardo, Gabriel Nathan
+| Ramoy, Lorenzo Uriel
+| |||||||||||||||||||||||||||||||
+. = 0
+
+| |||||||||||||||||||||||||||||||||||
+| Program entry
+| R0 = KEY memory block address
+| R1 = PLAINTEXT memory block address
+| R2 = ENCRYPTED memory block address
+| R3 = length of KEY
+| R4 = length of PLAINTEXT
+| R5 = KEY index pointer
+| |||||||||||||||||||||||||||||||||||
+    LD(KEY, R0)
+    LD(R0, R3)
+    
+    LD(PLAINTEXT, R1)
+    LD(R1, R4)
+
+    LD(ENCRYPTED, R2) 
+
+    ADDC(R0, 4, R0)
+    ADDC(R1, 4, R1)
+
+    CMOVE(0, R5)
+    
+| |||||||||||||||||||||||||||||||||||
+| Program entry
+| R6 = current KEY index value
+| R7 = current PLAINTEXT index value
+| R8 = result of R6 XOR R7
+| R9 = result of R3 = R5
+| |||||||||||||||||||||||||||||||||||
+loop:
+    BEQ(R4, end) | Branch if length of plaintext is already 0 
+    
+    LD(R0, R6)
+    LD(R1, R7)
+    XOR(R6, R7, R8)
+    ST(R2, 0, R8) | Store result in R2
+    
+    SUBC(R4, 1, R4) | Decrement plaintext length pointer
+    ADDC(R5, 1, R5) | Increment KEY index pointer
+    
+    CMPEQ(R5, R3, R9)
+    BNE(R9, wrap_around)
+    ADDC(R0, 4, R0) | Get next key value
+    ADDC(R1, 4, R1) | Get next plaintext value
+    ADDC(R2, 4, R2) | Prepare next ciphertext address
+
+    BR(loop)
+   
+wrap_around:   
+    LD(KEY, R0)
+    ADDC(R0, 4, R0)
+    CMOVE(0, R5)
+    ADDC(R1, 4, R1) | Get next plaintext value
+    ADDC(R2, 4, R2) | Prepare next ciphertext address
+
+    BR(loop)
+
+end:
+    HALT()
+
+| |||||||||||||||||||||||||||||||||||
+| Testing
+| |||||||||||||||||||||||||||||||||||
+.align 4
+KEY: LONG(2)
+     LONG(42)
+     LONG(67)
+
+PLAINTEXT: LONG(5)
+           LONG(72)
+           LONG(69)
+           LONG(76)
+           LONG(76)
+           LONG(79)
+
+ENCRYPTED: 
