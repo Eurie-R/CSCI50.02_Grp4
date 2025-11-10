@@ -1,0 +1,65 @@
+.include beta.uasm
+
+| |||||||||||||||||||||||||||||||
+| Dimatulac, Adara Rei
+| Pacardo, Gabriel Nathan
+| Ramoy, Lorenzo Uriel
+| |||||||||||||||||||||||||||||||
+. = 0
+
+| |||||||||||||||||||||||||||||||||||
+| Program entry
+| |||||||||||||||||||||||||||||||||||
+    LD(KEY, R0)
+    MOVE(R0, R3) | copy length of KEY into R3
+    
+    LD(PLAINTEXT, R1)
+    MOVE(R1, R4) | copy length of PLAINTEXT into R4
+
+    LD(ENCRYPTED, R2)
+
+    CMOVE(0, R5)  | KEY length pointer
+
+    CMOVE(0, R10) | KEY index pointer
+    CMOVE(0, R11) | PLAINTEXT index pointer
+    CMOVE(0, R12) | ENCRYPTED index pointer
+    
+loop:
+    BEQ(R4, end) | Branch if length of plaintext is already 0 
+    ADDC(R10, 4, R10) | update next KEY index
+    ADDC(R11, 4, R11) | update next PLAINTEXT index
+    LD(R10, KEY, R6) | load in new KEY value based on index
+    LD(R11, PLAINTEXT, R7) | load in new PLAINTEXT value based on index
+    XOR(R6, R7, R8)
+    ST(R2, R12, R8) | Store result in R2
+    SUBC(R4, 1, R4) | Decrement PLAINTEXT length pointer
+    ADDC(R5, 1, R5) | Increment KEY index pointer
+    CMPEQ(R5, R3, R9)
+    BNE(R9, wrap_around)
+    ADDC(R12, 4, R12)
+    BR(loop)
+wrap_around:   
+    LD(KEY, R0)
+    CMOVE(0, R5)
+    CMOVE(0, R10)
+    ADDC(R12, 4, R12)
+    BR(loop)  
+end:
+    HALT()
+
+| |||||||||||||||||||||||||||||||||||
+| Testing
+| |||||||||||||||||||||||||||||||||||
+
+KEY: LONG(2)
+     LONG(42)
+     LONG(67)
+
+PLAINTEXT: LONG(5)
+           LONG(72)
+           LONG(69)
+           LONG(76)
+           LONG(76)
+           LONG(79)
+
+ENCRYPTED: 
