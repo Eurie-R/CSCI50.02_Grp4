@@ -251,9 +251,9 @@ Xjdisplayb wr_werfs[2:0]    wr werf werf_          join
 *     (on top of the instruction opcode inputs) in the Xcontrol block?
 *     
 *     The z-input is needed and crucial for the BNE and BEQ instructions. 
-*     This is because they are what stores the result of the condition 
-*     than by BNE and BEQ, i.e. whether a value in a register is equal to 0 
-*     or whether a value in a register is NOT equal to 0.
+*     This is because this is what tells the Xcontrol block which set of control logic output
+*     to use, either the first 64 or the last 64. This is crucial for the BNE and BEQ instructions
+*     for the cases of taking a branch or not.
 *
 * (b) What is the true purpose of setting the invalid instructions' control 
 *     logic output to the constant 0b11000000000000?
