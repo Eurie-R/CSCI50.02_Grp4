@@ -140,6 +140,93 @@
 
 
 *******************************************************************************
+* MAIN CIRCUIT (the whole ass CPU)
+*******************************************************************************
+
+
+
+*******************************************************************************
+* RESET bit
+*******************************************************************************
+* Reset signal: HIGH at start, goes LOW after first clock edge
+Voltage reset 0 pwl(0ns 3.3v, 50ns 3.3v, 51ns 0v)
+
+*******************************************************************************
+* Clock Signal
+*******************************************************************************
+.connect clk4 clk
+
+
+*******************************************************************************
+* START OF PROGRAM COUNTER LOGIC
+*******************************************************************************
+
+*******************************************************************************
+* Program Counter mux Reset
+*******************************************************************************
+*Reset logic
+Xpc_reset_mux pcnext[31:0] 0#32 reset pc_input[31:0] mux2
+
+*PC Register (32-bit D-register, updates on clock rising edge)
+Xpc_reg pc_input[31:0] clk#32 pc[31:0] dreg 
+
+*******************************************************************************
+* PC + 4 Increment
+* PCSEL 00
+*******************************************************************************
+*Constant 4 that we will add 
+.connect pc[31:0] pcplus4_a[31:0]
+.connect 0 pcplus4_b[31:3]
+.connect vdd pcplus4_b[2]
+.connect 0 pcplus4_b [1:0]
+
+*Add PC + 4 
+*adds our pc value stored in pcplus4_a and the constant 4 stored in pcplus4_b
+Xpc_plus_4 pcplus4_a pcplus4_b 0 pcplus4[31:0] pcplus4_co[31:30] add32
+
+*******************************************************************************
+* Branch (PC + 4 * C)
+* PCSEL 01
+* TODO
+*******************************************************************************
+
+*******************************************************************************
+* JUMP Target
+* get from RA register as the next value for PC 
+* PCSEL 10
+*******************************************************************************
+* for PC always clear the last 2 bits 
+* connect rd1_ from register to jump target
+.connect rd1_[31:2] jt[31:2]
+.connect 0 jt[1:0]
+
+
+*******************************************************************************
+* Illop address = 0x80000008
+* PCSEL 11
+*******************************************************************************
+.connect vdd illop[31]
+.connect 0 illop[30:4]
+.connect vdd illop[3]
+.connect 0 illop[2:0]
+
+
+*******************************************************************************
+* PCSEL mux
+* 00 = PC + 4 , 01 = PC + 4 + C(Branch), 10 JT(from RA register), 11 = ILLOP
+*******************************************************************************
+*PCSEL mux: choose whats the next PC 
+*TODO branch
+Xpcsel_mux pcplus4[31:0] branch jt[31:0] illop[31:0]
++ pcsel[1:0] pcnext[31:0] mux4
+
+*******************************************************************************
+* END OF PROGRAM COUNTER LOGIC
+*******************************************************************************
+
+
+
+*******************************************************************************
 * Xmemory is a 512-byte main memory containing both user instructions and data.
 *   1st line = read port for the next instruction to process (inst)
 *   2nd line = read port for LD instructions (memrd)
@@ -183,9 +270,24 @@ Xwa_check wa_low4_all_ones wa[4] wa_is_31 and2
 * if wa = 31 signal is 0 if wa is != 31 signal is 1
 Xwa_not_31_inv wa_is_31 wa_not_31 inverter
 
-*werf_ will only be on(1) if both werf is on and wa is not 31
+* *********************************************************
+* WERF reset logic 
+* If reset = 1 (Lets reset!)
+* reset_inv will be 0 which will force werf to be 0 
+* *********************************************************
+Xreset_inv reset reset_inv inverter
+Xwerf_reset_mux werf reset_inv werf_noreset and2
+
+
+* *********************************************************
+* Final werf with r31 protectin logic and reset protection
+* *********************************************************
+*werf_ will only be on(1) if both werf is on(1) and wa is not 31
 *if werf = 1 and wa signal is 1(!= 31)
-Xwerf_final werf wa_not_31 werf_ and2
+Xwerf_final werf_noreset wa_not_31 werf_ and2
+
+
+
 
 *******************************************************************************
 * Xcontrol is a read-only memory (ROM) that defines what to feed into the
@@ -276,11 +378,12 @@ Xjinste inst[15:0]  c[15:0]     join
 * *********************************************************
 * RA2SEl mux
 * *********************************************************
-*if ra2sel 0, uses rb. If ra2sel 1, uses rc
+* 
+if ra2sel 0, uses rb. If ra2sel 1, uses rc
 Xra2sel_mux rb[4:0] rc[4:0] ra2sel ra2_[4:0] mux2
 
 * *********************************************************
-* Extend c to 32 bits
+* Extend c to 32 bits for BSEL mux
 * *********************************************************
 
 .connect c[15:0] ext_c[15:0]
@@ -290,6 +393,18 @@ Xra2sel_mux rb[4:0] rc[4:0] ra2sel ra2_[4:0] mux2
 * BSEL mux
 * *********************************************************
 Xbsel_mux rd2_[31:0] ext_c[31:0] bsel b[31:0] mux2 
+
+* *********************************************************
+* WDSEL mux (Write data select)
+*choose what to right back to register file
+* 00 or 0 goes PC + 4
+* 01 or 1 reads WD of register 
+* 10 or 2 reads memory
+* TODO 
+* *********************************************************
+
+
+
 
 
 
