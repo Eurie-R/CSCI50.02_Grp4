@@ -123,7 +123,7 @@
 ******************************************************************************
 * ALU 
 ******************************************************************************
- .subckt alu32 a[31:0] b[31:0] alufn[5:0] f[31:0]
+ .subckt alu32 a[31:0] b[31:0] alufn[5:0] f[31:0] 
  
   * alufn[3:0] for op
   Xas a[31:0] b[31:0] alufn0 fas[31:0] n v z as32
@@ -239,6 +239,16 @@ Xmemory  vdd  0    0   pc[8:2]    inst[31:0]
 + $memory width=32 nlocations=128 file="lab72.bin"
 
 *******************************************************************************
+* Also connect our instruction signal lines to our opcode, rc, ra, rb, and c.
+*******************************************************************************
+Xjinsta inst[31:26] opcode[5:0] join
+Xjinstb inst[25:21] rc[4:0]     join
+Xjinstc inst[20:16] ra[4:0]     join
+Xjinstd inst[15:11] rb[4:0]     join
+Xjinste inst[15:0]  c[15:0]     join
+
+
+*******************************************************************************
 * Xregisters is a register memory device to store your Beta registers r0 - r31.
 *   1st line = read port for rd1_
 *   2nd line = read port for rd2_
@@ -257,7 +267,7 @@ Xregisters  vdd  0    0      ra1_[4:0]  rd1_[31:0]
 + )
 
 *******************************************************************************
-* Temporarily connect werf_ directly to werf.
+* R31 Write Protection
 *******************************************************************************
 
 *checks first 4 bits if it is 1 
@@ -288,7 +298,6 @@ Xwerf_final werf_noreset wa_not_31 werf_ and2
 
 
 
-
 *******************************************************************************
 * Xcontrol is a read-only memory (ROM) that defines what to feed into the
 * control signal lines of you final Beta circuit, depending on what opcode
@@ -298,7 +307,6 @@ Xwerf_final werf_noreset wa_not_31 werf_ and2
 *   2nd line = the memory statement itself
 *   succeeding lines = the control signals (14 bits each) for all 64 opcodes
 *                      times 2 (first half is for z = 0, second half for z = 1)
-* TODO: Fill these lines with the proper control signals for each opcode!
 * PCSEL = 00, RA2SEL = 0, BSEL=1(literal), WDSEL=10, ALUFN=000000(ADD), WR=0 , WERF=1
 * WDSEL values:
 *   00 = PC+4 (for JMP/BEQ/BNE to store return address)
@@ -340,18 +348,10 @@ Xcontrol  vdd  0  0  z opcode[5:0]  control[13:0]
 +   0b00010101100001 0b00010101111001 0b00010101011001 0b11000000000000 0b00010110000001 0b00010110000101 0b00010110001101 0b11000000000000
 + )
 
-*******************************************************************************
-* Helper subckt to facilitate multi-bit joins.
-*******************************************************************************
-.subckt join S T
-  .connect S T
-.ends
 
-*******************************************************************************
-* The following .connect statements define what control signal goes to which
-* of the 14 bits of the control ROM's output. The bits are ordered as they
-* appear in the control logic diagram of your 50.01 slides.
-*******************************************************************************
+* *********************************************************
+* Extract Control Logic
+* *********************************************************
 Xjcontrola control[13:12] pcsel[1:0] join
 Xjcontrolb control11      ra2sel     join
 Xjcontrolc control10      bsel       join
@@ -361,13 +361,12 @@ Xjcontrolf control1       wr         join
 Xjcontrolg control0       werf       join
 
 *******************************************************************************
-* Also connect our instruction signal lines to our opcode, rc, ra, rb, and c.
+* Helper subckt to facilitate multi-bit joins.
 *******************************************************************************
-Xjinsta inst[31:26] opcode[5:0] join
-Xjinstb inst[25:21] rc[4:0]     join
-Xjinstc inst[20:16] ra[4:0]     join
-Xjinstd inst[15:11] rb[4:0]     join
-Xjinste inst[15:0]  c[15:0]     join
+.subckt join S T
+  .connect S T
+.ends
+
 
 
 
@@ -378,8 +377,7 @@ Xjinste inst[15:0]  c[15:0]     join
 * *********************************************************
 * RA2SEl mux
 * *********************************************************
-* 
-if ra2sel 0, uses rb. If ra2sel 1, uses rc
+* if ra2sel 0, uses rb. If ra2sel 1, uses rc
 Xra2sel_mux rb[4:0] rc[4:0] ra2sel ra2_[4:0] mux2
 
 * *********************************************************
@@ -392,21 +390,18 @@ Xra2sel_mux rb[4:0] rc[4:0] ra2sel ra2_[4:0] mux2
 * *********************************************************
 * BSEL mux
 * *********************************************************
-Xbsel_mux rd2_[31:0] ext_c[31:0] bsel b[31:0] mux2 
+Xbsel_mux rd2_[31:0] ext_c[31:0] bsel alu_b[31:0] mux2 
+
+Xalu rd1_[31:0] alu_b[31:0] alufn[5:0] alu_out[31:0]
 
 * *********************************************************
 * WDSEL mux (Write data select)
 *choose what to right back to register file
 * 00 or 0 goes PC + 4
-* 01 or 1 reads WD of register 
+* 01 or 1 reads from ALU
 * 10 or 2 reads memory
-* TODO 
 * *********************************************************
-
-
-
-
-
+Xwdsel_mux pcplus4[31:0] alu_out[31:0] memrd[31:0] 0#32 wdsel[1:0] wd[31:0] mux4
 
 
 *******************************************************************************
