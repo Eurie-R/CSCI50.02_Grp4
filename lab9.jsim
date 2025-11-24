@@ -150,7 +150,7 @@
 Xmemory  vdd  0    0   pc[8:2]    inst[31:0]
 +        vdd  0    0   mema[8:2]  memrd[31:0]
 +        0    clk  wr  mema[8:2]  memwd[31:0]
-+ $memory width=32 nlocations=128 file="lab72.bin"
++ $memory width=32 nlocations=128 file="lab7.bin"
 
 
 *******************************************************************************
@@ -289,7 +289,7 @@ Xjinste inst[15:0]  c[15:0]     join
 * Program Counter mux Reset
 *******************************************************************************
 *Reset logic
-Xpc_reset_mux pcnext[31:0] 0#32 reset pc_input[31:0] mux2
+Xpc_reset_mux pcnext[31:0] 0#32 reset#32 pc_input[31:0] mux2
 
 *PC Register (32-bit D-register, updates on clock rising edge)
 Xpc_reg pc_input[31:0] clk#32 pc[31:0] dreg 
@@ -306,7 +306,7 @@ Xpc_reg pc_input[31:0] clk#32 pc[31:0] dreg
 
 *Add PC + 4 
 *adds our pc value stored in pcplus4_a and the constant 4 stored in pcplus4_b
-Xpc_plus_4 pcplus4_a pcplus4_b 0 pcplus4[31:0] pcplus4_co[31:30] add32
+Xpc_plus_4 pcplus4_a[31:0] pcplus4_b[31:0] 0 pcplus4[31:0] pcplus4_co[31:30] add32
 
 *******************************************************************************
 * Branch (PC + 4 + 4 * C)
@@ -325,7 +325,7 @@ Xpc_plus_4 pcplus4_a pcplus4_b 0 pcplus4[31:0] pcplus4_co[31:30] add32
 *Multiply 4 * c
 Xplus_4_times_c c[31:0] b[4:0] op[1:0] fshift[31:0] shift32 
 
-Add (PC + 4) + (4 * C)
+*Add (PC + 4) + (4 * C)
 Xpc_plus_4_plus_4_times_const pcplus4_branch[31:0] fshift[31:0] 0 pcplus4const4c[31:0] pcplus4const4c_co[31:30] add32
 
 *******************************************************************************
@@ -353,8 +353,8 @@ Xpc_plus_4_plus_4_times_const pcplus4_branch[31:0] fshift[31:0] 0 pcplus4const4c
 * 00 = PC + 4 , 01 = PC + 4 + 4 * C (Branch), 10 JT(from RA register), 11 = ILLOP
 *******************************************************************************
 *PCSEL mux: choose whats the next PC 
-Xpcsel_mux pcplus4[31:0] pcplus4const4c[31:0]branch jt[31:0] illop[31:0]
-+ pcsel[1:0] pcnext[31:0] mux4
+Xpcsel_mux pcplus4[31:0] pcplus4const4c[31:0] jt[31:0] illop[31:0]
++ pcsel[1:0]#32 pcnext[31:0] mux4
 
 *******************************************************************************
 * ^^END OF PROGRAM COUNTER LOGIC
@@ -376,9 +376,9 @@ Xra2sel_mux rb[4:0] rc[4:0] ra2sel ra2_[4:0] mux2
 *******************************************************************************
 * BSEL mux
 *******************************************************************************
-Xbsel_mux rd2_[31:0] ext_c[31:0] bsel alu_b[31:0] mux2 
+Xbsel_mux bsel#32 rd2_[31:0] ext_c15#16 ext_c[15:0] alu_b[31:0] mux2 
 
-Xalu rd1_[31:0] alu_b[31:0] alufn[5:0] alu_out[31:0]
+Xalu rd1_[31:0] alu_b[31:0] alufn[5:0] alu_out[31:0] alu32
 
 *******************************************************************************
 * WDSEL mux (Write data select)
@@ -387,7 +387,7 @@ Xalu rd1_[31:0] alu_b[31:0] alufn[5:0] alu_out[31:0]
 * 01 or 1 reads from ALU
 * 10 or 2 reads memory
 *******************************************************************************
-Xwdsel_mux pcplus4[31:0] alu_out[31:0] memrd[31:0] 0#32 wdsel[1:0] wd[31:0] mux4
+Xwdsel_mux pcplus4[31:0] alu_out[31:0] memrd[31:0] 0#32 wdsel[31:0] wd[31:0] wdsel_out[31:0] mux4
 
 
 *******************************************************************************
