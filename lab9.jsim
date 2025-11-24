@@ -185,10 +185,24 @@ Xpc_reg pc_input[31:0] clk#32 pc[31:0] dreg
 Xpc_plus_4 pcplus4_a pcplus4_b 0 pcplus4[31:0] pcplus4_co[31:30] add32
 
 *******************************************************************************
-* Branch (PC + 4 * C)
+* Branch (PC + 4 + 4 * C)
 * PCSEL 01
-* TODO
 *******************************************************************************
+.connect pcplus4[31:0] pcplus4_branch[31:0]
+
+*sets b to binary 2 for shift32 for (4 * C)
+.connect 0 b[4:2]
+.connect vdd b[1]
+.connect 0 b[0]
+
+*sets shift32 to logical shift left
+.connect 0 op[1:0]
+
+*Multiply 4 * c
+Xplus_4_times_c c[31:0] b[4:0] op[1:0] fshift[31:0] shift32 
+
+Add (PC + 4) + (4 * C)
+Xpc_plus_4_plus_4_times_const pcplus4_branch[31:0] fshift[31:0] 0 pcplus4const4c[31:0] pcplus4const4c_co[31:30] add32
 
 *******************************************************************************
 * JUMP Target
@@ -199,7 +213,6 @@ Xpc_plus_4 pcplus4_a pcplus4_b 0 pcplus4[31:0] pcplus4_co[31:30] add32
 * connect rd1_ from register to jump target
 .connect rd1_[31:2] jt[31:2]
 .connect 0 jt[1:0]
-
 
 *******************************************************************************
 * Illop address = 0x80000008
@@ -367,9 +380,6 @@ Xjcontrolg control0       werf       join
   .connect S T
 .ends
 
-
-
-
 * *********************************************************
 * REGISTER FILE
 * *********************************************************
@@ -402,22 +412,3 @@ Xalu rd1_[31:0] alu_b[31:0] alufn[5:0] alu_out[31:0]
 * 10 or 2 reads memory
 * *********************************************************
 Xwdsel_mux pcplus4[31:0] alu_out[31:0] memrd[31:0] 0#32 wdsel[1:0] wd[31:0] mux4
-
-
-*******************************************************************************
-* Temporarily connect pc[] to the predefined clocks so that we can view each
-* instruction in sequence.
-* Note that you will need to replace this with a real program counter circuit
-* in the final lab!
-*******************************************************************************
-Xjpc clk[8:2] pc[8:2] join
-.connect 0 pc[1:0]
-
-*******************************************************************************
-* Temporarily connect other undefined signals.
-* Note that you will need to remove these signals from this section once you
-* connect them elsewhere!
-*******************************************************************************
-.connect vdd clk ra1_[4:0] ra2_[4:0] wa[4:0] wd[31:0] mema[8:0] memwd[31:0]
-.connect 0 z
-
