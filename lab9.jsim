@@ -266,8 +266,11 @@ Xjcontrolb control11      ra2sel     join
 Xjcontrolc control10      bsel       join
 Xjcontrold control[9:8]   wdsel[1:0] join
 Xjcontrole control[7:2]   alufn[5:0] join
-Xjcontrolf control1       wr         join
-Xjcontrolg control0       werf       join
+* Xjcontrolf control1       wr         join
+* Xjcontrolg control0       werf       join
+
+Xreset_wr reset1 control1 0 wr mux2
+Xreset_werf reset1 control0 0 werf mux2
 
 *******************************************************************************
 * Also connect our instruction signal lines to our opcode, rc, ra, rb, and c.
@@ -278,9 +281,6 @@ Xjinstc inst[20:16] ra[4:0]     join
 Xjinstd inst[15:11] rb[4:0]     join
 Xjinste inst[15:0]  c[15:0]     join
 
-Xjwa rc[4:0] wa[4:0] join
-Xjra1 ra[4:0] ra1_[4:0] join
-
 *******************************************************************************
 * END OF LAB 8
 *******************************************************************************
@@ -290,13 +290,19 @@ Xjra1 ra[4:0] ra1_[4:0] join
 *******************************************************************************
 .connect clk4 clk
 
-
 *******************************************************************************
 * RESET bit
 *******************************************************************************
 * Reset signal: HIGH at start, goes LOW after first clock edge
+Wreset reset nrz(0, 5, 40ns, 0ns, 0.001ns, 0.001ns) 1 0
+Wreset1 reset1 nrz(0, 5, 39ns, 0ns, 0.001ns, 0.001ns) 1 0
 
-Voltage reset 0 pwl(0ns 3.3v, 50ns 3.3v, 51ns 0v)
+*******************************************************************************
+* Connect rc to wa; ra to ra1
+*******************************************************************************
+Xjwa rc[4:0] wa[4:0] join
+Xjra1 ra[4:0] ra1_[4:0] join
+
 
 *******************************************************************************
 * START OF PROGRAM COUNTER LOGIC
@@ -304,10 +310,10 @@ Voltage reset 0 pwl(0ns 3.3v, 50ns 3.3v, 51ns 0v)
 * Program Counter mux Reset
 *******************************************************************************
 *Reset logic
-Xpc_reset_mux reset#32 pcnext[31:0] 0#32 pc_input[31:0] mux2
+Xpc_reset_mux reset#32 pc_input[31:0] 0#32 pc[31:0] mux2
 
 *PC Register (32-bit D-register, updates on clock rising edge)
-Xpc_reg pc_input[31:0] clk#32 pc[31:0] dreg 
+Xpc_reg pcnext[31:0] clk#32 pc_input[31:0] dreg 
 
 *******************************************************************************
 * PC + 4 Increment
@@ -370,7 +376,7 @@ Xpc_plus_4_plus_4_times_const pcplus4[31:0] fshift[31:0] 0 pcplus4const4c[31:0] 
 * 00 = PC + 4 , 01 = PC + 4 + 4 * C (Branch), 10 JT(from RA register), 11 = ILLOP
 *******************************************************************************
 *PCSEL mux: choose whats the next PC 
-Xpcsel_mux pcsel0#32 pcsel1#32 pcplus4[31:0] pcplus4const4c[31:0] jt[31:0] 
+Xpcsel_mux pcsel0#32 pcsel1#32 pcplus4[31:0] pcplus4const4c[31:0] jt[31:0]  
 + illop[31:0] pcnext[31:0] mux4
 
 *******************************************************************************
@@ -397,7 +403,7 @@ Xalu rd1_[31:0] alu_b[31:0] alufn[5:0] alu_out[31:0] alu32
 * 01 or 1 reads from ALU
 * 10 or 2 reads memory
 *******************************************************************************
-Xwdsel_mux wdsel0#32 wdsel1#32 pcplus4[31:0] alu_out[31:0] memrd[31:0] 0#32 wd[31:0] mux4
+Xwdsel_mux wdsel[1:0]#32 pcplus4[31:0] alu_out[31:0] memrd[31:0] 0#32 wd[31:0] mux4
 
 *******************************************************************************
 * Z NOR
@@ -448,9 +454,8 @@ Xjdisplayb wr_werfs[2:0]    wr werf werf_          join
 *            lab, z should instead be computed by some circuit instead of
 *            connected to ground or vdd!)
 *******************************************************************************
+
 .tran 1280ns
-.plot clk
-.plot reset
 .plot pc[8:0]
 .plot betaop(opcode[5:0])
 .plot d(ra[4:0])
