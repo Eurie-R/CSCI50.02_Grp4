@@ -304,7 +304,7 @@ Voltage reset 0 pwl(0ns 3.3v, 50ns 3.3v, 51ns 0v)
 * Program Counter mux Reset
 *******************************************************************************
 *Reset logic
-Xpc_reset_mux reset#32 pcnext[31:0] 0#32 pc_input[31:0] mux2
+Xpc_reset_mux reset32 pcnext[31:0] 0#32 pc_input[31:0] mux2
 
 *PC Register (32-bit D-register, updates on clock rising edge)
 Xpc_reg pc_input[31:0] clk#32 pc[31:0] dreg 
