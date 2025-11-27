@@ -56,7 +56,7 @@
 Xmemory  vdd  0    0   pc[8:2]    inst[31:0]
 +        vdd  0    0   mema[8:2]  memrd[31:0]
 +        0    clk  wr  mema[8:2]  memwd[31:0]
-+ $memory width=32 nlocations=128 file="lab72.bin"
++ $memory width=32 nlocations=128 file="lab7.bin"
 
 *******************************************************************************
 * Xregisters is a register memory device to store your Beta registers r0 - r31.
@@ -83,19 +83,9 @@ Xregisters  vdd  0    0      ra1_[4:0]  rd1_[31:0]
 *       original werf signal.
 *******************************************************************************
 
-*checks first 4 bits if it is 1 
-Xlow_4_wa wa[3:0] wa_low4_all_ones and4
-
-*checks last bit if it is 1 to check if wa is 31 
-Xwa_check wa_low4_all_ones wa[4] wa_is_31 and2
-
-*invert it to compare to werf.  
-* if wa = 31 signal is 0 if wa is != 31 signal is 1
-Xwa_not_31_inv wa_is_31 wa_not_31 inverter
-
-*werf_ will only be on(1) if both werf is on and wa is not 31
-*if werf = 1 and wa signal is 1(!= 31)
-Xwerf_final werf wa_not_31 werf_ and2
+Xand1 wa[3:0] wa_temp and4
+Xand2 wa4 wa_temp wa_ and2
+Xwerf wa_ werf 0 werf_ mux2
 
 *******************************************************************************
 * Xcontrol is a read-only memory (ROM) that defines what to feed into the

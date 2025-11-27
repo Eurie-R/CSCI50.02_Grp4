@@ -55,4 +55,4 @@ OUTPUT: . = .           | ensure label at OUTPUT_ADDR
         . = . + 4*64    | reserve room for up to 64 terms (adjust as needed)
 
     . = 0x1000
-INPUT:  LONG(10)        | example: N = 10 (change before run)
+INPUT:  LONG(2)        | example: N = 10 (change before run)

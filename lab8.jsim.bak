@@ -1,7 +1,8 @@
 *******************************************************************************
 * As with the previous labs, replace this header comment with your names!
-* - Follow "Last Name, First Name" format.
-* - Sort alphabetically!
+* Dimatulac, Adara Rei
+* Pacardo, Gabriel Nathan
+* Ramoy, Lorenzo Uriel
 *******************************************************************************
 
 .include "8clocks.jsim"
@@ -55,7 +56,7 @@
 Xmemory  vdd  0    0   pc[8:2]    inst[31:0]
 +        vdd  0    0   mema[8:2]  memrd[31:0]
 +        0    clk  wr  mema[8:2]  memwd[31:0]
-+ $memory width=32 nlocations=128 file="lab7.bin"
++ $memory width=32 nlocations=128 file="lab72.bin"
 
 *******************************************************************************
 * Xregisters is a register memory device to store your Beta registers r0 - r31.
@@ -81,7 +82,6 @@ Xregisters  vdd  0    0      ra1_[4:0]  rd1_[31:0]
 *       the werf_ signal is forced OFF; otherwise, it should pass through the
 *       original werf signal.
 *******************************************************************************
-.connect werf werf_
 
 *checks first 4 bits if it is 1 
 Xlow_4_wa wa[3:0] wa_low4_all_ones and4
@@ -244,3 +244,33 @@ Xjdisplayb wr_werfs[2:0]    wr werf werf_          join
 .plot d(mema[8:0])
 .plot sd(memrd[31:0])
 .plot sd(memwd[31:0])
+*********************************************************************************
+* GUIDE QUESTIONS:
+* 
+* (a) What is the true purpose of the additional Z input 
+*     (on top of the instruction opcode inputs) in the Xcontrol block?
+*     
+*     The z-input is needed and crucial for the BNE and BEQ instructions. 
+*     This is because this is what tells the Xcontrol block which set of control logic output
+*     to use, either the first 64 or the last 64. This is crucial for the BNE and BEQ instructions
+*     for the cases of taking a branch or not.
+*
+* (b) What is the true purpose of setting the invalid instructions' control 
+*     logic output to the constant 0b11000000000000?
+*
+*     From what we can infer, the true purpose of setting the invalid instructions' control
+*     logic output to the constant 0b11000000000000, since this constant is equivalent to HALT. 
+*     Therefore, when there is an invalid instruction, the program halts.
+*
+* (c) Does your Lab 7 program (that you yourself provided) represent a
+*     good number of opcodes that your control logic supports? What's
+*     the functional coverage? (i.e., which opcodes did you implement in
+*     your control logic table, and which ones are actually exercised by
+*     your Lab 7 program?)
+*
+*     Not really. Out of the 64 available, including the invalid ones, 
+*     we only used around 7: LD, ST, ADD, ADDC, BEQ, CMPLT, and HALT. 
+*     Technically, there's also CMOVE and MOVE, but they're just equivalents of ADDC and ADD, respectively. 
+*     In terms of the opcodes we implemented in our control logic table, we implemented all 64, 
+*     or 128 (if you count the bottom half of the table as distinct versions of the opcodes).
+***********************************************************************************

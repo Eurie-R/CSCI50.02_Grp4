@@ -1,15 +1,15 @@
 .include beta.uasm
 
-| -------------------------
+| |||||||||||||||||||||||||||||||
 | Dimatulac, Adara Rei
 | Pacardo, Gabriel Nathan
 | Ramoy, Lorenzo Uriel
-| -------------------------
+| |||||||||||||||||||||||||||||||
     . = 0
 
-    | -------------------------
+    | |||||||||||||||||||||||||||||||||||
     | Program entry
-    | -------------------------
+    | |||||||||||||||||||||||||||||||||||
     LD(INPUT, R0)       | R0 = input N
     CMOVE(0, R1)        | R1 = first term
     CMOVE(1, R2)        | R2 = second term
@@ -24,18 +24,18 @@ loop_check:
     BEQ(R6, end)        | if i = 0 you end the program or branch to end
 
 
-    | -------------------------
+    | |||||||||||||||||||||||||||||||||||
     | Storing the first value into the address 
-    | -------------------------
+    | |||||||||||||||||||||||||||||||||||
   
     ST(R1, 0, R4)       | Storing first term into the r4 
     ADDC(R4, 4, R4)     | R4 += 4 go to the next memory address 
     ADDC(R3, 1, R3)     | increment i or i++
 
-    | -------------------------
+    | |||||||||||||||||||||||||||||||||||
     | Computing the next value and adding it to r2
     | Then moving the next fib value to r1 
-    | -------------------------
+    | |||||||||||||||||||||||||||||||||||
     | compute next = F_prev + F_curr and shift:
     ADD(R1, R2, R5)     | R5 = R1 + R2 : R5 being the temporary storage 
     MOVE(R2, R1)        | Shift contents of the 2nd term to the first term like sliding window
@@ -46,9 +46,9 @@ loop_check:
 end:
     HALT()
 
-    | -------------------------
+    | |||||||||||||||||||||||||||||||||||
     | Testing
-    | -------------------------
+    | |||||||||||||||||||||||||||||||||||
     .align 4
     . = OUTPUT_ADDR
 OUTPUT: . = .           | ensure label at OUTPUT_ADDR

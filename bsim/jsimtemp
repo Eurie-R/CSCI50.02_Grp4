@@ -55,5 +55,5 @@ INPUT:
         LONG(4)
         LONG(6)
         LONG(2)
-        
+		
 OUTPUT:
